@@ -98,36 +98,96 @@ def signup_user(username: str, email: str, password: str) -> dict:
 
 # ── Login ─────────────────────────────────────────────────────────────────────
 
+# def login_user(email: str, password: str) -> dict:
+#     db = get_db()
+#     try:
+#         user = db.execute("SELECT * FROM users WHERE email = ?", (email.lower(),)).fetchone()
+#         if not user or not user["password_hash"]:
+#             _log(None, "failed_login", f'{{"email":"{email}"}}', db)
+#             db.commit()
+#             raise ValueError("Incorrect email or password")
+
+#         if not verify_password(password, user["password_hash"]):
+#             _log(None, "failed_login", f'{{"email":"{email}"}}', db)
+#             db.commit()
+#             raise ValueError("Incorrect email or password")
+
+#         # If the stored hash uses an older scheme (e.g., bcrypt), re-hash with Argon2
+#         try:
+#             if pwd_context.needs_update(user["password_hash"]):
+#                 new_hash = hash_password(password)
+#                 db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user["id"]))
+#         except Exception:
+#             # Don't block login on rehash failures; log and continue
+#             _log(user["id"], "rehash_failed", None, db)
+
+#         db.execute(
+#             "UPDATE users SET last_login = ? WHERE id = ?",
+#             (datetime.now(timezone.utc), user["id"]),
+#         )
+#         _log(user["id"], "login", None, db)
+#         db.commit()
+#         token = create_token(user["id"], user["email"])
+#         return {
+#             "message": "Login successful",
+#             "token": token,
+#             "user": {
+#                 "id": user["id"],
+#                 "username": user["username"],
+#                 "email": user["email"],
+#                 "profile_picture": user["profile_picture"],
+#             },
+#         }
+#     finally:
+#         db.close()
+
 def login_user(email: str, password: str) -> dict:
     db = get_db()
     try:
-        user = db.execute("SELECT * FROM users WHERE email = ?", (email.lower(),)).fetchone()
+        print("=" * 50)
+        print("LOGIN ATTEMPT")
+        print("EMAIL:", email.lower())
+
+        user = db.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email.lower(),)
+        ).fetchone()
+
+        print("USER FOUND:", user is not None)
+
+        if user:
+            print("USER ID:", user["id"])
+            print("HASH EXISTS:", bool(user["password_hash"]))
+            print("HASH:", user["password_hash"][:30] + "...")
+
         if not user or not user["password_hash"]:
+            print("FAILED: USER NOT FOUND OR HASH MISSING")
             _log(None, "failed_login", f'{{"email":"{email}"}}', db)
             db.commit()
             raise ValueError("Incorrect email or password")
 
-        if not verify_password(password, user["password_hash"]):
+        password_ok = verify_password(password, user["password_hash"])
+
+        print("PASSWORD MATCH:", password_ok)
+
+        if not password_ok:
+            print("FAILED: PASSWORD MISMATCH")
             _log(None, "failed_login", f'{{"email":"{email}"}}', db)
             db.commit()
             raise ValueError("Incorrect email or password")
 
-        # If the stored hash uses an older scheme (e.g., bcrypt), re-hash with Argon2
-        try:
-            if pwd_context.needs_update(user["password_hash"]):
-                new_hash = hash_password(password)
-                db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user["id"]))
-        except Exception:
-            # Don't block login on rehash failures; log and continue
-            _log(user["id"], "rehash_failed", None, db)
+        print("LOGIN SUCCESS")
 
         db.execute(
             "UPDATE users SET last_login = ? WHERE id = ?",
             (datetime.now(timezone.utc), user["id"]),
         )
+
         _log(user["id"], "login", None, db)
         db.commit()
+
         token = create_token(user["id"], user["email"])
+
         return {
             "message": "Login successful",
             "token": token,
@@ -138,6 +198,7 @@ def login_user(email: str, password: str) -> dict:
                 "profile_picture": user["profile_picture"],
             },
         }
+
     finally:
         db.close()
 
