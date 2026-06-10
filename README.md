@@ -173,7 +173,37 @@ FastAPI auto-generates interactive docs at `/docs` (Swagger UI) and `/redoc`.
 - CORS restricted to configured origins
 
 ---
+## 🚀 Live Demo
 
+Frontend (Vercel):
+https://codepilot-asm7gniso-king00-wqs-projects.vercel.app
+
+Backend API (Render):
+https://codepilot-backend-9dvx.onrender.com
+
+---
+## 🏗️ Deployment Architecture
+
+## 🏗️ Deployment Architecture
+
+```mermaid
+flowchart TD
+
+    A[👤 User Browser]
+    B[⚡ Vercel Frontend<br/>React Application]
+    C[🚀 Render Backend<br/>FastAPI]
+    D[🗄️ SQLite Database]
+    E[🤖 OpenRouter]
+    F[🧠 AI Models<br/>Gemma / Nemotron]
+
+    A --> B
+    B -->|HTTPS Requests| C
+    C -->|Read / Write| D
+    C -->|AI Requests| E
+    E --> F
+```
+
+---
 ## Roadmap
 
 | Version | Features |
